@@ -5,7 +5,20 @@ set(CMAKE_CXX_STANDARD 11)
 if(MSVC)
 	include_directories(deps/Spout2/SPOUTSDK/SpoutLibrary)
 	include_directories(deps/Spout2/SPOUTSDK/SpoutDirectX/SpoutDX)
-	link_directories(deps/Spout2/BUILD/Binaries/x64)
+endif()
+
+set(SPOUT_BUILD_CMT OFF CACHE BOOL "" FORCE)
+set(SPOUT_BUILD_LIBRARY ON CACHE BOOL "" FORCE)
+set(SPOUT_BUILD_SPOUTDX ON CACHE BOOL "" FORCE)
+set(SKIP_INSTALL_ALL ON CACHE BOOL "" FORCE)
+add_subdirectory(deps/Spout2 EXCLUDE_FROM_ALL)
+
+if(MSVC)
+	foreach(spout_target Spout Spout_static SpoutLibrary SpoutLibrary_static SpoutDX SpoutDX_static)
+		if(TARGET ${spout_target})
+			target_compile_options(${spout_target} PRIVATE /wd4828)
+		endif()
+	endforeach()
 endif()
 
 set(win-spout_HEADERS
@@ -26,25 +39,22 @@ include_directories(
 	"${CMAKE_SOURCE_DIR}/libobs"
 )
 
-set(SPOUTDX_LIB "${CMAKE_CURRENT_SOURCE_DIR}/deps/Spout2/BUILD/Binaries/x64/SpoutDX.lib")
 target_link_libraries(win-spout PRIVATE
 	OBS::libobs
-	${SPOUTDX_LIB}
+	SpoutLibrary
+	SpoutDX
 	OBS::w32-pthreads
 )
+target_link_directories(win-spout PRIVATE
+	$<TARGET_LINKER_FILE_DIR:SpoutLibrary>
+	$<TARGET_LINKER_FILE_DIR:SpoutDX>
+)
+add_dependencies(win-spout Spout)
 
 set(MODULE_DESCRIPTION "Spout2 plugin")
 
 function(install_spout_dependencies)
-	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		set(_src_suffix "x64")
-	else()
-		set(_src_suffix "win32")
-	endif()
-
-	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/deps/Spout2/BUILD/Binaries/${_src_suffix}/Spout.dll" DESTINATION "${OBS_PLUGIN_DESTINATION}")
-	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/deps/Spout2/BUILD/Binaries/${_src_suffix}/SpoutLibrary.dll" DESTINATION "${OBS_PLUGIN_DESTINATION}")
-	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/deps/Spout2/BUILD/Binaries/${_src_suffix}/SpoutDX.dll" DESTINATION "${OBS_PLUGIN_DESTINATION}")
+	install(TARGETS Spout SpoutLibrary SpoutDX RUNTIME DESTINATION "${OBS_PLUGIN_DESTINATION}")
 endfunction()
 
 set_target_properties(win-spout PROPERTIES FOLDER "plugins")
