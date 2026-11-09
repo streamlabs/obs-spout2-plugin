@@ -54,7 +54,7 @@ add_dependencies(win-spout Spout)
 set(MODULE_DESCRIPTION "Spout2 plugin")
 
 function(install_spout_dependencies)
-	install(TARGETS Spout SpoutLibrary SpoutDX RUNTIME DESTINATION "${OBS_PLUGIN_DESTINATION}")
+	install(TARGETS Spout SpoutLibrary SpoutDX RUNTIME DESTINATION "${OBS_PLUGIN_DESTINATION}/win-spout")
 endfunction()
 
 set_target_properties(win-spout PROPERTIES FOLDER "plugins")
